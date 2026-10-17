@@ -1,0 +1,41 @@
+name: OpenVPM
+description: Generate deploy-ready VPM repositories from a configuration file.
+
+inputs:
+  config:
+    description: Specifies the path to the OpenVPM configuration file.
+    default: openvpm.yaml
+
+  output:
+    description: Specifies the directory where generated files will be written.
+    default: dist
+
+  base-url:
+    description: Specifies the public base URL of the VPM repository.
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Set up pnpm and Node.js
+      uses: pnpm/setup@v3
+      with:
+        version: 12
+        runtime: node@24
+        install: false
+
+    - name: Install dependencies
+      shell: bash
+      working-directory: ${{ github.action_path }}
+      run: pnpm install --frozen-lockfile
+
+    - name: Build repository
+      shell: bash
+      working-directory: ${{ github.action_path }}
+      run: pnpm build
+      env:
+        OPENVPM_CONFIG: ${{ inputs.config }}
+        OPENVPM_OUTPUT: ${{ inputs.output }}
+        OPENVPM_BASE_URL: ${{ inputs.base-url }}
+        OPENVPM_WORKSPACE: ${{ github.workspace }}
+        GITHUB_TOKEN: ${{ github.token }}
