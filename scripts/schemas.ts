@@ -1,22 +1,22 @@
 import { z } from "zod";
 
 /**
- * Describes a package compatible with the Unity Package Manager.
+ * Schema for a Unity Package Manager package manifest.
  *
  * @see https://docs.unity3d.com/2022.3/Documentation/Manual/upm-manifestPkg.html
  */
 export const UnityPackageManifestSchema = z
   .object({
-    /** Unique package identifier in reverse domain name notation. */
+    /** The unique identifier of the package. */
     name: z.string().min(1),
 
-    /** Package version following Semantic Versioning. */
+    /** The package version, following Semantic Versioning. */
     version: z.string().min(1),
 
-    /** Human-readable name displayed in the Unity Editor. */
+    /** The name displayed in the Unity Editor. */
     displayName: z.string().optional(),
 
-    /** Description of the package and its functionality. */
+    /** A description of the package. */
     description: z.string().optional(),
 
     /** Information about the package author. */
@@ -25,13 +25,13 @@ export const UnityPackageManifestSchema = z
         z.string(),
         z
           .object({
-            /** Name of the package author. */
+            /** The author's name. */
             name: z.string().min(1),
 
-            /** Email address of the package author. */
+            /** The author's email address. */
             email: z.email().optional(),
 
-            /** Website of the package author. */
+            /** The URL of the author's website. */
             url: z.url().optional(),
           })
           .catchall(z.unknown()),
@@ -41,39 +41,39 @@ export const UnityPackageManifestSchema = z
     /** Keywords used to discover the package. */
     keywords: z.array(z.string()).optional(),
 
-    /** License identifier or license information. */
+    /** The package license. */
     license: z.string().optional(),
 
-    /** Minimum compatible Unity Editor version. */
+    /** The minimum supported Unity Editor version. */
     unity: z.string().optional(),
 
-    /** Specific Unity Editor release required by the package. */
+    /** The specific Unity Editor release required by the package. */
     unityRelease: z.string().optional(),
 
-    /** Dependencies managed by the Unity Package Manager. */
+    /** Dependencies managed by Unity Package Manager. */
     dependencies: z.record(z.string(), z.string()).optional(),
 
-    /** URL of the package documentation. */
+    /** The URL of the package documentation. */
     documentationUrl: z.url().optional(),
 
-    /** URL of the package changelog. */
+    /** The URL of the package changelog. */
     changelogUrl: z.url().optional(),
 
-    /** URL of the package license information. */
+    /** The URL of the package license information. */
     licensesUrl: z.url().optional(),
 
-    /** Sample assets that can be imported into a Unity project. */
+    /** Samples that can be imported into a Unity project. */
     samples: z
       .array(
         z
           .object({
-            /** Human-readable name of the sample. */
+            /** The name displayed for the sample. */
             displayName: z.string().min(1),
 
-            /** Description of the sample. */
+            /** A description of the sample. */
             description: z.string(),
 
-            /** Path to the sample directory within the package. */
+            /** The path to the sample directory. */
             path: z.string().min(1),
           })
           .catchall(z.unknown()),
@@ -83,50 +83,121 @@ export const UnityPackageManifestSchema = z
     /** Whether package assets are hidden in the Unity Editor. */
     hideInEditor: z.boolean().optional(),
 
-    /** Package type reserved for internal Unity use. */
+    /** The package type used internally by Unity. */
     type: z.string().optional(),
   })
   .catchall(z.unknown());
 
 /**
- * Describes a package compatible with the VRChat Package Manager.
- *
- * @see https://vcc.docs.vrchat.com/vpm/packages
+ * Schema for a VRChat Package Manager package manifest.
  */
 export const VRChatPackageManifestSchema = UnityPackageManifestSchema.extend({
-  /** Human-readable name displayed in the Creator Companion. */
+  /** The name displayed in the VRChat Creator Companion. */
   displayName: z.string().min(1),
 
   /** Information about the package author. */
   author: z
     .object({
-      /** Name of the package author. */
+      /** The author's name. */
       name: z.string().min(1),
 
-      /** Email address of the package author. */
+      /** The author's email address. */
       email: z.email(),
 
-      /** Website of the package author. */
+      /** The URL of the author's website. */
       url: z.url().optional(),
     })
     .catchall(z.unknown()),
 
-  /** Direct download URL of the package ZIP archive. */
+  /** The URL for downloading the package ZIP archive. */
   url: z.url(),
 
-  /** Dependencies managed by the VRChat Package Manager. */
+  /** Dependencies managed by VRChat Package Manager. */
   vpmDependencies: z.record(z.string(), z.string()).optional(),
 
-  /** Legacy directories to remove when installing the package. */
+  /** Legacy directories to remove during installation. */
   legacyFolders: z.record(z.string(), z.string()).optional(),
 
-  /** Legacy files to remove when installing the package. */
+  /** Legacy files to remove during installation. */
   legacyFiles: z.record(z.string(), z.string()).optional(),
 
-  /** Legacy packages to remove when installing the package. */
+  /** Legacy packages to remove during installation. */
   legacyPackages: z.array(z.string()).optional(),
+});
+
+/**
+ * Schema for an external UPM registry configuration.
+ */
+export const UpmRegistryConfigSchema = z.strictObject({
+  /** The name of the registry. */
+  name: z.string().min(1),
+
+  /** The URL of the registry. */
+  url: z.url(),
+});
+
+/**
+ * Schema for package source configuration.
+ */
+export const PackageSourceConfigSchema = z.strictObject({
+  /** The GitHub repository in owner/repository format. */
+  name: z.string().regex(/^[A-Za-z0-9-]+\/[A-Za-z0-9._-]+$/),
+
+  /** The path to the directory containing the package manifest. */
+  path: z.string().min(1).default("."),
+
+  /** The regular expression used to match tags and extract versions. */
+  tagPattern: z
+    .string()
+    .min(1)
+    .refine(
+      (value) => {
+        try {
+          new RegExp(value);
+          return value.includes("(?<version>");
+        } catch {
+          return false;
+        }
+      },
+      {
+        error:
+          "Must be a valid regular expression with a named 'version' capture group.",
+      },
+    )
+    .default(
+      String.raw`^v(?<version>\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?)$`,
+    ),
+});
+
+/**
+ * Schema for an OpenVPM configuration.
+ */
+export const ConfigSchema = z.strictObject({
+  /** The name of the VPM repository. */
+  name: z.string().min(1),
+
+  /** The unique identifier of the VPM repository. */
+  id: z.string().min(1),
+
+  /** The author of the VPM repository. */
+  author: z.string().min(1),
+
+  /** A description of the VPM repository. */
+  description: z.string().optional(),
+
+  /** UPM registries used to resolve and redistribute dependencies. */
+  upmRegistries: z.array(UpmRegistryConfigSchema).default([]),
+
+  /** Package sources included in the VPM repository. */
+  packageSources: z.array(PackageSourceConfigSchema).default([]),
 });
 
 export type UnityPackageManifest = z.infer<typeof UnityPackageManifestSchema>;
 
 export type VRChatPackageManifest = z.infer<typeof VRChatPackageManifestSchema>;
+
+export type UpmRegistryConfig = z.infer<typeof UpmRegistryConfigSchema>;
+
+export type PackageSourceConfig = z.infer<typeof PackageSourceConfigSchema>;
+
+export type Config = z.infer<typeof ConfigSchema>;
