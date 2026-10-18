@@ -11,6 +11,11 @@ const BASE_URL = requireEnv("OPENVPM_BASE_URL");
 const GITHUB_TOKEN = requireEnv("GITHUB_TOKEN");
 
 async function main() {
+  console.log("Config:", CONFIG_PATH);
+  console.log("Output", OUTPUT_PATH);
+  console.log("Base URL:", BASE_URL);
+  console.log("GitHub authenticated:", Boolean(GITHUB_TOKEN));
+
   // TODO: Build the VPM repository
 }
 
