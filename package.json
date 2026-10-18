@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "tsc -b && vite build && tsx scripts/build.ts",
     "lint": "oxlint",
     "format": "prettier --write .",
     "preview": "vite preview"
@@ -26,6 +26,7 @@
     "prettier": "^3.9.10",
     "prettier-plugin-organize-imports": "^4.3.0",
     "prettier-plugin-tailwindcss": "^0.8.1",
+    "tsx": "^4.23.15",
     "typescript": "~6.0.2",
     "vite": "^8.3.0",
     "zod": "^4.6.7"
