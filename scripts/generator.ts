@@ -1,5 +1,9 @@
 import type { Octokit } from "@octokit/rest";
-import { collectPackageSources, type PackageSource } from "./packages.ts";
+import {
+  buildPackage,
+  collectPackageSources,
+  type PackageSource,
+} from "./packages.ts";
 import { type Config } from "./schemas.ts";
 
 export async function generateRepository({
@@ -13,21 +17,22 @@ export async function generateRepository({
   outputPath: string;
   baseUrl: string;
 }) {
-  console.log("Output path:", outputPath);
-  console.log("Base URL:", baseUrl);
+  const packageSources: PackageSource[] = (
+    await Promise.all(
+      config.packageSources.map((config) =>
+        collectPackageSources({ config, octokit }),
+      ),
+    )
+  ).flat();
 
-  const packageSources: PackageSource[] = [];
-
-  for (const packageSourceConfig of config.packageSources) {
-    packageSources.push(
-      ...(await collectPackageSources({
-        config: packageSourceConfig,
-        octokit,
-      })),
-    );
+  for (const packageSource of packageSources) {
+    await buildPackage({
+      source: packageSource,
+      octokit,
+      outputPath,
+      baseUrl,
+    });
   }
-
-  console.log("Collected package sources:", packageSources.length);
 
   // TODO: Generate the VPM repository.
 }
