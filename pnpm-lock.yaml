@@ -221,6 +221,9 @@ importers:
         specifier: ^4.3.3
         version: 4.3.3
     devDependencies:
+      '@octokit/openapi-types':
+        specifier: ^29.0.1
+        version: 29.0.1
       '@octokit/rest':
         specifier: ^22.0.1
         version: 22.0.1

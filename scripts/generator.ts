@@ -1,7 +1,7 @@
 import type { Octokit } from "@octokit/rest";
 import {
   buildPackage,
-  collectPackageSources,
+  collectSources,
   type PackageSource,
 } from "./packages.ts";
 import { type Config } from "./schemas.ts";
@@ -20,7 +20,7 @@ export async function generateRepository({
   const packageSources: PackageSource[] = (
     await Promise.all(
       config.packageSources.map((config) =>
-        collectPackageSources({ config, octokit }),
+        collectSources({ config, octokit }),
       ),
     )
   ).flat();

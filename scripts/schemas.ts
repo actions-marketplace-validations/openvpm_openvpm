@@ -143,30 +143,8 @@ export const PackageSourceConfigSchema = z.strictObject({
   /** The GitHub repository in owner/repository format. */
   name: z.string().regex(/^[A-Za-z0-9-]+\/[A-Za-z0-9._-]+$/),
 
-  /** The path to the directory containing the package manifest. */
-  path: z.string().min(1).default("."),
-
-  /** The regular expression used to match tags and extract versions. */
-  tagPattern: z
-    .string()
-    .min(1)
-    .refine(
-      (value) => {
-        try {
-          new RegExp(value);
-          return value.includes("(?<version>");
-        } catch {
-          return false;
-        }
-      },
-      {
-        error:
-          "Must be a valid regular expression with a named 'version' capture group.",
-      },
-    )
-    .default(
-      String.raw`^v(?<version>\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?)$`,
-    ),
+  /** The pattern used to identify package ZIP assets. */
+  assetPattern: z.string().default("*.zip"),
 });
 
 /**
