@@ -1,42 +1,44 @@
-import type { components } from "@octokit/openapi-types";
 import type { Octokit } from "@octokit/rest";
-import { strFromU8, strToU8, unzipSync, zipSync } from "fflate";
+import { strFromU8, strToU8, type Unzipped, unzipSync, zipSync } from "fflate";
 import { createHash } from "node:crypto";
 import { mkdir, writeFile } from "node:fs/promises";
 import { join, matchesGlob } from "node:path";
 import { URL } from "node:url";
+import type { PackageSourceConfig } from "./config.ts";
 import {
-  type PackageSourceConfig,
-  VRChatPackageManifestSchema,
+  type VpmPackageManifest,
+  VpmPackageManifestSchema,
 } from "./schemas.ts";
 
-/**
- * Represents a package source resolved to a GitHub Release asset.
- */
-export type PackageSource = PackageSourceConfig & {
-  /** The GitHub Release tag name. */
-  tag: string;
+const PACKAGE_MANIFEST_FILENAME = "package.json";
 
-  /** The GitHub Release asset. */
-  asset: components["schemas"]["release-asset"];
+/**
+ * Represents a VRChat Package Manager package with its manifest and files.
+ */
+export type VpmPackage = {
+  /** The package manifest. */
+  manifest: VpmPackageManifest;
+
+  /** The extracted package files excluding the manifest. */
+  files: Unzipped;
 };
 
 /**
- * Collects package sources from GitHub Releases matching the given configuration.
+ * Collects packages from GitHub Releases matching the given configuration.
  *
- * @param options - The options for collecting package sources.
+ * @param options - The options for collecting packages.
  * @param options.config - The configuration defining the GitHub repository and asset pattern.
  * @param options.octokit - The Octokit client used to access GitHub.
- * @returns The collected package sources.
+ * @returns The collected packages with their manifests and extracted files.
  */
-export async function collectSources({
+export async function collectPackages({
   config,
   octokit,
 }: {
   config: PackageSourceConfig;
   octokit: Octokit;
-}): Promise<PackageSource[]> {
-  const { owner, repo } = parseRepositoryName(config.name);
+}): Promise<VpmPackage[]> {
+  const [owner, repo] = config.name.split("/");
 
   const releases = await octokit.paginate(octokit.rest.repos.listReleases, {
     owner,
@@ -44,109 +46,99 @@ export async function collectSources({
     per_page: 100,
   });
 
-  return releases
+  const assets = releases
     .filter((release) => !release.draft && !release.prerelease)
     .flatMap((release) =>
-      release.assets
-        .filter(
-          (asset) =>
-            asset.state === "uploaded" &&
-            matchesGlob(asset.name, config.assetPattern),
-        )
-        .map((asset) => ({
-          ...config,
-          tag: release.tag_name,
-          asset,
-        })),
+      release.assets.filter(
+        (asset) =>
+          asset.state === "uploaded" &&
+          matchesGlob(asset.name, config.assetPattern),
+      ),
     );
+
+  return Promise.all(
+    assets.map(async (asset): Promise<VpmPackage> => {
+      const { data } = await octokit.rest.repos.getReleaseAsset({
+        owner,
+        repo,
+        asset_id: asset.id,
+        headers: {
+          accept: "application/octet-stream",
+        },
+      });
+
+      if (!(data instanceof ArrayBuffer)) {
+        throw new Error(
+          `Expected binary release asset: ${config.name}/${asset.name}`,
+        );
+      }
+
+      const bytes = new Uint8Array(data);
+      const files = unzipSync(bytes);
+
+      const manifestFile = files[PACKAGE_MANIFEST_FILENAME];
+
+      if (!manifestFile) {
+        throw new Error(
+          `Package manifest not found: ${config.name}/${asset.name}`,
+        );
+      }
+
+      const manifest = VpmPackageManifestSchema.parse({
+        ...JSON.parse(strFromU8(manifestFile)),
+        url: asset.browser_download_url,
+      });
+
+      delete files[PACKAGE_MANIFEST_FILENAME];
+
+      return { manifest, files };
+    }),
+  );
 }
 
 /**
- * Builds a VPM package from a GitHub Release asset.
+ * Builds and writes a package archive.
  *
  * @param options - The options for building the package.
- * @param options.source - The package source containing the GitHub Release asset.
- * @param options.octokit - The Octokit client used to access GitHub.
+ * @param options.vpmPackage - The package to build.
  * @param options.outputPath - The directory where the package will be written.
  * @param options.baseUrl - The public base URL of the VPM repository.
+ * @returns The built package manifest and ZIP checksum.
  */
 export async function buildPackage({
-  source,
-  octokit,
+  vpmPackage,
   outputPath,
   baseUrl,
 }: {
-  source: PackageSource;
-  octokit: Octokit;
+  vpmPackage: VpmPackage;
   outputPath: string;
   baseUrl: string;
 }) {
-  const { owner, repo } = parseRepositoryName(source.name);
-
-  const { data } = await octokit.rest.repos.getReleaseAsset({
-    owner,
-    repo,
-    asset_id: source.asset.id,
-    headers: {
-      accept: "application/octet-stream",
-    },
-  });
-
-  if (!(data instanceof ArrayBuffer)) {
-    throw new Error(
-      `Expected binary release asset: ${source.name}/${source.asset.name} (tag: ${source.tag})`,
-    );
-  }
-
-  const archive = new Uint8Array(data);
-  const files = unzipSync(archive);
-
-  const manifestContent = files["package.json"];
-
-  if (!manifestContent) {
-    throw new Error(
-      `Package manifest not found: ${source.name}/${source.asset.name} (tag: ${source.tag})`,
-    );
-  }
-
-  const sourceManifest = VRChatPackageManifestSchema.parse(
-    JSON.parse(strFromU8(manifestContent)),
-  );
-
-  const filename = `${sourceManifest.name}-${sourceManifest.version}.zip`;
+  const filename = `${vpmPackage.manifest.name}-${vpmPackage.manifest.version}.zip`;
 
   const url = new URL(
     `packages/${encodeURIComponent(filename)}`,
     `${baseUrl.replace(/\/+$/, "")}/`,
   ).toString();
 
-  const manifest = VRChatPackageManifestSchema.parse({
-    ...sourceManifest,
+  const manifest = VpmPackageManifestSchema.parse({
+    ...vpmPackage.manifest,
     url,
   });
 
-  // TODO: Resolve external UPM dependencies.
+  const bytes = zipSync({
+    ...vpmPackage.files,
+    [PACKAGE_MANIFEST_FILENAME]: strToU8(
+      `${JSON.stringify(manifest, null, 2)}\n`,
+    ),
+  });
 
-  files["package.json"] = strToU8(`${JSON.stringify(manifest, null, 2)}\n`);
+  const zipSHA256 = createHash("sha256").update(bytes).digest("hex");
 
-  const packageArchive = zipSync(files);
-  const zipSHA256 = createHash("sha256").update(packageArchive).digest("hex");
+  const directory = join(outputPath, "packages");
 
-  const packageDirectory = join(outputPath, "packages");
-
-  await mkdir(packageDirectory, { recursive: true });
-  await writeFile(join(packageDirectory, filename), packageArchive);
+  await mkdir(directory, { recursive: true });
+  await writeFile(join(directory, filename), bytes);
 
   return { manifest, zipSHA256 };
-}
-
-/**
- * Parses a GitHub repository name into its owner and repository name.
- *
- * @param name - The repository name in owner/repo format.
- * @returns The repository owner and name.
- */
-function parseRepositoryName(name: string): { owner: string; repo: string } {
-  const [owner, repo] = name.split("/");
-  return { owner, repo };
 }

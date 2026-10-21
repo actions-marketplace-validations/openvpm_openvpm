@@ -30,6 +30,7 @@
     "prettier": "^3.9.10",
     "prettier-plugin-organize-imports": "^4.3.0",
     "prettier-plugin-tailwindcss": "^0.8.1",
+    "tar": "^7.5.22",
     "tsx": "^4.23.15",
     "typescript": "~6.0.2",
     "vite": "^8.3.0",
