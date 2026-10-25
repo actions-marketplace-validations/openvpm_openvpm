@@ -1,6 +1,10 @@
 name: OpenVPM
 description: Generate deploy-ready VPM repositories from a configuration file.
 
+branding:
+  icon: package
+  color: blue
+
 inputs:
   config:
     description: Specifies the path to the OpenVPM configuration file.
