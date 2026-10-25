@@ -38,6 +38,12 @@ export const ConfigSchema = z.strictObject({
   /** A description of the VPM repository. */
   description: z.string().optional(),
 
+  /** The primary UI color in #RGB or #RRGGBB format. */
+  primaryColor: z
+    .string()
+    .regex(/^#(?:[\da-f]{3}|[\da-f]{6})$/i)
+    .default("#08BDBB"),
+
   /** UPM registries used to resolve and redistribute dependencies. */
   upmRegistries: z.array(UpmRegistryConfigSchema).default([]),
 

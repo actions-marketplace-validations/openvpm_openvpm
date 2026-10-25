@@ -37,7 +37,7 @@ export default function App() {
         ) : repository ? (
           <>
             <header className="mb-8 text-center">
-              <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
+              <h1 className="via-primary bg-linear-to-r from-[color-mix(in_oklch,var(--primary)_40%,#ec4899)] to-[color-mix(in_oklch,var(--primary)_40%,#0ea5e9)] bg-clip-text text-3xl font-semibold tracking-tight text-transparent sm:text-4xl forced-colors:bg-none forced-colors:text-[CanvasText]">
                 {repository.name}
               </h1>
               {repository.description && (

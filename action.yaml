@@ -34,9 +34,6 @@ runs:
       working-directory: ${{ github.action_path }}
       run: pnpm build
       env:
-        VITE_GITHUB_OWNER: ${{ github.repository_owner }}
-        VITE_GITHUB_REPO: ${{ github.event.repository.name }}
-        VITE_GITHUB_REPOSITORY_URL: ${{ github.server_url }}/${{ github.repository }}
         OPENVPM_CONFIG: ${{ inputs.config }}
         OPENVPM_OUTPUT: ${{ inputs.output }}
         OPENVPM_BASE_URL: ${{ inputs.base-url }}
