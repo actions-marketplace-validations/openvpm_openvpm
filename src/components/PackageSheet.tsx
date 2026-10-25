@@ -2,6 +2,7 @@ import PackageDetailsSheetContent from "@/components/PackageDetailsSheetContent.
 import PackageListSheetContent from "@/components/PackageListSheetContent.tsx";
 import { Button } from "@/components/ui/button.tsx";
 import { Sheet, SheetTrigger } from "@/components/ui/sheet.tsx";
+import { PackageIcon } from "lucide-react";
 import { type ComponentProps, useState } from "react";
 import type { VpmRepository } from "../../schemas.ts";
 
@@ -29,7 +30,10 @@ export default function PackageSheet({
         onOpenChangeComplete?.(open);
       }}
     >
-      <SheetTrigger render={<Button variant="outline">View packages</Button>} />
+      <SheetTrigger render={<Button variant="outline" />}>
+        <PackageIcon aria-hidden="true" />
+        View packages
+      </SheetTrigger>
       {selectedPackage ? (
         <PackageDetailsSheetContent
           key={selectedPackageId}

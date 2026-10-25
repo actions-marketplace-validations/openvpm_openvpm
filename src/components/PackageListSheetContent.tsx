@@ -18,7 +18,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet.tsx";
 import { cn } from "@/lib/utils.ts";
-import { SearchIcon } from "lucide-react";
+import { PackageIcon, SearchIcon } from "lucide-react";
 import { type ComponentProps, useId, useMemo } from "react";
 import { maxSatisfying, rsort } from "semver";
 import type { VpmRepository } from "../../schemas.ts";
@@ -107,7 +107,10 @@ export default function PackageListSheetContent({
 
   return (
     <SheetContent {...props}>
-      <SheetHeader className="shrink-0 pr-12">
+      <SheetHeader className="shrink-0 flex-row items-center gap-1 pr-12">
+        <span className="flex size-8 shrink-0 items-center justify-center">
+          <PackageIcon aria-hidden="true" className="size-4" />
+        </span>
         <SheetTitle>Packages</SheetTitle>
         <SheetDescription className="sr-only">
           Search packages and view their details.
