@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 136 100.09">
+  <defs>
+    <style>
+      .cls-1 {
+        fill: #102b36;
+      }
+
+      .cls-2 {
+        fill: #117f8c;
+      }
+
+      .cls-3 {
+        fill: #c5f5fa;
+      }
+
+      .cls-4 {
+        fill: #35d5e9;
+      }
+
+      .cls-5 {
+        fill: #08bdbb;
+      }
+
+      .cls-6 {
+        fill: #159a9f;
+      }
+    </style>
+  </defs>
+  <path id="_01-inner-bridge" data-name="01-inner-bridge" class="cls-2" d="M59.46,40.24h29.81l-5.59,21.36-11.64,2.32-12.57-23.68Z"/>
+  <path id="_02-lower-right" data-name="02-lower-right" class="cls-6" d="M72.03,62.99l11.64-1.39c11.64-2.32,30.27-10.68,44.24-20.9-7.92,14.86-18.16,34.37-25.15,43.65-3.26,5.11-6.52,8.36-10.25,11.15l-3.73-2.79-16.77-29.72Z"/>
+  <path id="_03-upper-right" data-name="03-upper-right" class="cls-5" d="M83.68,61.6c2.33-16.25,7.45-30.19,14.44-42.72,10.25,6.04,22.35,14.4,29.81,21.83-13.97,10.22-32.6,18.58-44.24,20.9Z"/>
+  <path id="_04-pale-fold" data-name="04-pale-fold" class="cls-3" d="M98.11,18.88l8.38-14.4c2.79-5.11,6.05-5.57,9.78-2.79,5.59,3.72,12.11,8.82,15.83,13.93,6.52,7.43,4.66,18.11-4.19,25.08-7.45-7.43-19.56-15.79-29.81-21.83Z"/>
+  <path id="_05-front-ribbon" data-name="05-front-ribbon" class="cls-4" d="M5.9,19.81l21.89-7.89c10.71-4.18,18.63,2.32,22.82,10.22l41.91,73.37c-7.92,6.5-25.61,5.11-38.65,1.86-8.85-2.21-13.97-4.64-19.56-12.07L2.18,35.13c-3.73-5.81-2.79-12.14,3.73-15.33Z"/>
+  <g id="eyes">
+    <ellipse id="left-eye" class="cls-1" cx="33.38" cy="50.92" rx="3.96" ry="6.97"/>
+    <ellipse id="right-eye" class="cls-1" cx="51.54" cy="55.56" rx="3.96" ry="6.97"/>
+  </g>
+</svg>
