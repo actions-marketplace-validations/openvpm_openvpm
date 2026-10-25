@@ -1,16 +1,29 @@
 import { strFromU8, type Unzipped } from "fflate";
 import { createHash } from "node:crypto";
 import { Parser } from "tar";
-import type { UpmRegistryConfig } from "./config.ts";
-import type { VpmPackage } from "./packages.ts";
 import {
   UpmPackageManifestSchema,
   type UpmPackageMetadata,
   UpmPackageMetadataSchema,
   VpmPackageManifestSchema,
-} from "./schemas.ts";
+} from "../schemas.ts";
+import type { UpmRegistryConfig } from "./config.ts";
+import type { VpmPackage } from "./packages.ts";
 
 const BUILTIN_UPM_REGISTRY = "https://packages.unity.com";
+
+// Core packages ship with the Editor and may be absent from the registry.
+// https://docs.unity3d.com/ja/2023.1/Manual/pack-core.html
+const CORE_UPM_PACKAGES = new Set([
+  "com.unity.2d.sprite",
+  "com.unity.2d.tilemap",
+  "com.unity.render-pipelines.core",
+  "com.unity.render-pipelines.high-definition",
+  "com.unity.render-pipelines.universal",
+  "com.unity.shadergraph",
+  "com.unity.ugui",
+  "com.unity.visualeffectgraph",
+]);
 
 /**
  * Represents a Unity Package Manager dependency to be resolved from a package registry.
@@ -44,7 +57,10 @@ export async function collectDependencies(
 
   const results = await Promise.all(
     dependencies.map(async (dependency) => {
-      if (dependency.name.startsWith("com.unity.modules.")) {
+      if (
+        dependency.name.startsWith("com.unity.modules.") ||
+        CORE_UPM_PACKAGES.has(dependency.name)
+      ) {
         return null;
       }
 

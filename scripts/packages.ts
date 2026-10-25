@@ -4,11 +4,11 @@ import { createHash } from "node:crypto";
 import { mkdir, writeFile } from "node:fs/promises";
 import { join, matchesGlob } from "node:path";
 import { URL } from "node:url";
-import type { PackageSourceConfig } from "./config.ts";
 import {
   type VpmPackageManifest,
   VpmPackageManifestSchema,
-} from "./schemas.ts";
+} from "../schemas.ts";
+import type { PackageSourceConfig } from "./config.ts";
 
 const PACKAGE_MANIFEST_FILENAME = "package.json";
 

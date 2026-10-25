@@ -1,10 +1,11 @@
 import type { Octokit } from "@octokit/rest";
 import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
+import { satisfies } from "semver";
+import { type VpmRepository, VpmRepositorySchema } from "../schemas.ts";
 import type { Config } from "./config.ts";
 import { collectDependencies, resolveDependency } from "./dependencies.ts";
 import { buildPackage, collectPackages } from "./packages.ts";
-import { type VpmRepository, VpmRepositorySchema } from "./schemas.ts";
 
 export async function generateRepository({
   config,
@@ -29,6 +30,12 @@ export async function generateRepository({
     const { manifest } = vpmPackage;
     for (const upmDependency of await collectDependencies([vpmPackage])) {
       const { name, version } = upmDependency;
+      const range = manifest.vpmDependencies?.[name];
+      if (range !== undefined && !satisfies(version, range)) {
+        throw new Error(
+          `Incompatible dependency ${name} in ${manifest.name}@${manifest.version}: UPM version ${version} does not satisfy VPM range ${range}`,
+        );
+      }
       if (
         !vpmPackages.some(
           ({ manifest }) =>
@@ -47,15 +54,7 @@ export async function generateRepository({
       }
 
       manifest.vpmDependencies ??= {};
-      if (
-        manifest.vpmDependencies[name] !== undefined &&
-        manifest.vpmDependencies[name] !== version
-      ) {
-        throw new Error(
-          `Conflicting VPM dependency ${name} in ${manifest.name}`,
-        );
-      }
-      manifest.vpmDependencies[name] = version;
+      manifest.vpmDependencies[name] ??= version;
       delete manifest.dependencies?.[name];
     }
   }
